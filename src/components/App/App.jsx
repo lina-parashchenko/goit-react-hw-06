@@ -1,36 +1,18 @@
 import css from "./App.module.css";
-import { useState, useEffect, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useMemo } from "react";
 import { useDebounce } from "use-debounce";
 
 import ContactForm from "../ContactForm/ContactForm";
 import ContactList from "../ContactList/ContactList";
 import SearchBox from "../SearchBox/SearchBox";
+import { deleteContact } from "../../redux/contactsSlice";
 
 export default function App() {
-  const [contacts, setContacts] = useState(() => {
-    const savedContacts = window.localStorage.getItem("contacts");
-
-    if (savedContacts !== null) {
-      return JSON.parse(savedContacts);
-    }
-
-    return [];
-  });
-
-  const [filter, setFilter] = useState("");
+  const contacts = useSelector((state) => state.contacts.items);
+  const filter = useSelector((state) => state.filters.name);
   const [debouncedInputValue] = useDebounce(filter, 200);
-
-  const addContact = (newContact) => {
-    setContacts((prevContact) => {
-      return [...prevContact, newContact];
-    });
-  };
-
-  const deleteContact = (contactId) => {
-    setContacts((prevContacts) => {
-      return prevContacts.filter((contact) => contact.id !== contactId);
-    });
-  };
+  const dispatch = useDispatch();
 
   const visibileContacts = useMemo(() => {
     return contacts.filter((contact) =>
@@ -38,16 +20,16 @@ export default function App() {
     );
   }, [debouncedInputValue, contacts]);
 
-  useEffect(() => {
-    window.localStorage.setItem("contacts", JSON.stringify(contacts));
-  }, [contacts]);
+  const handleDelete = (id) => {
+    dispatch(deleteContact(id));
+  };
 
   return (
-    <div>
+    <div className={css.container}>
       <h1>Phonebook</h1>
-      <ContactForm onAdd={addContact} />
-      <SearchBox value={filter} onFilter={setFilter} />
-      <ContactList contactsList={visibileContacts} onDelete={deleteContact} />
+      <ContactForm />
+      <SearchBox />
+      <ContactList contactsList={visibileContacts} onDelete={handleDelete} />
     </div>
   );
 }
